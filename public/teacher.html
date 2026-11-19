@@ -308,13 +308,10 @@ let tab=store.get('tp-tab','show');
 const TABS={show:'📽 投影簡報',board:'📊 計分板',rank:'🏆 排行榜（投影用）',flow:'📋 流程與講稿',ans:'🔑 答案',qr:'📱 學生連結 QR'};
 function nav(){ $('#nav').innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="${k===tab?'on':''}" onclick="tab='${k}';store.set('tp-tab',tab);draw()">${v}</button>`).join(''); }
 function gamebar(){
-  const T=SV.teacher||{}; const el=T.start?snow()-T.start:0, left=(T.limit||11)*60000-el;
   const tv=teamsView();
   return `<div class="gamebar">
-   ${T.start?`<div class="gclock" id="gclock" style="color:${left<0?'var(--bad)':'inherit'}">${fmt(left)} <small>剩餘（已過 ${fmt(el)}）</small></div>`:`<button class="btn" style="font-size:22px" onclick="act('start')">▶ 遊戲開始（開始計時）</button>`}
-   <div class="row zh">遊戲時間 <button class="btn ghost" onclick="act('limit',{delta:-1})">−</button><b style="font-size:22px">${T.limit||11} 分</b><button class="btn ghost" onclick="act('limit',{delta:1})">+</button></div>
+   <span class="zh" style="font-size:18px">已加入 <b style="font-size:24px">${tv.filter(t=>t.rec).length}</b> 組｜已逃脫 <b style="font-size:24px">${tv.filter(t=>t.escAt).length}</b> / ${TEAMS} 組</span>
    <span style="flex:1"></span>
-   <span class="zh">已加入 <b style="font-size:22px">${tv.filter(t=>t.rec).length}</b> 組｜已逃脫 <b style="font-size:22px">${tv.filter(t=>t.escAt).length}</b> / ${TEAMS} 組</span>
    <button class="btn ghost" onclick="newClass()">🆕 新的一班（清除重來）</button></div>`;
 }
 function board(){
@@ -331,7 +328,7 @@ function board(){
     <div class="tbtns"><button class="plus" onclick="act('bonus',{team:${n},value:2,why:'🗣 說英文'})">🗣+2</button><button class="plus" onclick="act('bonus',{team:${n},value:2,why:'🤝 團隊合作'})">🤝+2</button><button class="plus" onclick="act('bonus',{team:${n},value:1,why:'✋ 秩序好'})">✋+1</button><button class="plus" onclick="act('bonus',{team:${n},value:5,why:'⭐ 特別表現'})">⭐+5</button><button class="minus" onclick="act('bonus',{team:${n},value:-1,why:'➖ 扣分'})">➖1</button></div>
     <div class="tbtns" style="margin-top:6px;font-size:13px"><button onclick="act('adj',{team:${n},delta:1})" style="font-size:13px">＋關</button><button onclick="act('adj',{team:${n},delta:-1})" style="font-size:13px">－關</button><button onclick="release(${n})" style="font-size:13px;margin-left:auto">清除此組</button></div>
     </div>`}).join('')}</div>
-  <div class="log zh"><b>紀錄</b><br>${events().map(e=>`[${T.start&&e.at>=T.start?fmt(e.at-T.start):new Date(e.at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}] ${e.msg}`).join('<br>')||'（還沒有紀錄）'}</div>`;
+  <div class="log zh"><b>紀錄</b><br>${events().map(e=>`[${new Date(e.at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}] ${e.msg}`).join('<br>')||'（還沒有紀錄）'}</div>`;
 }
 function rank(){
   const tv=teamsView().sort((a,b)=>b.score-a.score||b.stage-a.stage||((a.escAt||1e15)-(b.escAt||1e15)));
@@ -360,9 +357,9 @@ function flow(){
    <td><span class="say">Match the sentences and the pictures.</span><br><span class="say">How many did you get?</span><br><span class="say">Good job!</span></td><td>③ 配對練習<br>④ 快問快答</td></tr>
   <tr><td class="t">20–35'<br>密室逃脫</td><td>
    ① 說明規則（2 分）：每組一台、輪流操作；答錯凍結 8 秒；提示每組最多 3 次；過關會自動回報。<br>
-   ② 學生先選好組別。講完規則按投影上的「🔓 顯示開始碼」（<b>7319</b>），同時在計分板按「▶ 遊戲開始」。<br>
+   ② 學生先選好組別。講完規則按投影上的「🔓 顯示開始碼」（<b>7319</b>）。<br>
    ③ 學生過關會<b>自動</b>出現在計分板；看到用英文討論的組按 🗣+2。<br>
-   ④ 約 11 分鐘後停止，切到「🏆 排行榜」投影。</td>
+   ④ 時間到就停止，切到「🏆 排行榜」投影。</td>
    <td><span class="say">Work in groups.</span><br><span class="say">Choose your group number.</span><br><span class="say">Type the start code on the screen.</span><br><span class="say">Ready, steady, go!</span><br><span class="say">One minute left!</span></td><td>⑤ 密室逃脫<br>（選組別＋輸入開始碼）</td></tr>
   <tr><td class="t">35–40'<br>結尾</td><td>
    ① 公布排行榜、頒獎（掌聲）。<br>
@@ -412,7 +409,6 @@ document.body.classList.add('locked');
 draw();
 if(PIN){ fetch('/api/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:PIN,action:'check'})}).then(r=>{ if(r.ok){ document.body.classList.remove('locked'); } else { PIN=''; askPin(); } }).catch(()=>{ document.body.classList.remove('locked'); }); } else askPin();
 poll(); setInterval(poll,2000);
-setInterval(()=>{ const T=SV.teacher||{}; const g=$('#gclock'); if(g&&T.start){ const el=snow()-T.start,left=(T.limit||11)*60000-el; g.innerHTML=`${fmt(left)} <small>剩餘（已過 ${fmt(el)}）</small>`; g.style.color=left<0?'var(--bad)':'inherit'; } },1000);
 </script>
 </body>
 </html>
