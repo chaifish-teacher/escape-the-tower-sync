@@ -8,9 +8,11 @@ export default async (req) => {
     try { body = await req.json(); } catch { body = {}; }
   }
   try {
-    const store = getStore({ name: "escape-tower", consistency: "strong" });
-    const pin = Netlify.env.get("TEACHER_PIN") || "9876";
-    const { status, json } = await handle({ store, method: req.method, path: url.pathname, body, pin });
+    const demo = url.pathname.startsWith("/api/demo/");
+    const store = getStore({ name: demo ? "escape-tower-demo" : "escape-tower", consistency: "strong" });
+    const pin = demo ? "1234" : (Netlify.env.get("TEACHER_PIN") || "9876");
+    const path = demo ? url.pathname.replace("/api/demo/", "/api/") : url.pathname;
+    const { status, json } = await handle({ store, method: req.method, path, body, pin });
     return Response.json(json, { status, headers: { "cache-control": "no-store" } });
   } catch (err) {
     console.error("api error", err);

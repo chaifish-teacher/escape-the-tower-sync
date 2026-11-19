@@ -136,6 +136,7 @@ body.locked main,body.locked nav{filter:blur(14px);pointer-events:none}
 <main id="main"></main>
 
 <script>
+const API_BASE = location.pathname.startsWith('/demo') ? '/api/demo' : '/api';
 const $=s=>document.querySelector(s);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const fmt=ms=>{const neg=ms<0;const s=Math.floor(Math.abs(ms)/1000);return (neg?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
@@ -161,7 +162,7 @@ function drawPhase(){ if(!$('#phases')) return;
 let SV={room:null,now:0,teacher:{start:0,limit:11,bonus:{},adj:{},escAt:{},log:[]},teams:{}}, skew=0, online=null, lastSig='';
 let PIN=store.get('tp-pin','');
 async function api(path,body){
-  const r=await fetch('/api'+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  const r=await fetch(API_BASE+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
   const j=await r.json().catch(()=>({}));
   if(r.status===401){ PIN=''; store.set('tp-pin',''); askPin(); throw new Error('pin'); }
   if(!r.ok) throw new Error(j.reason||'err');
@@ -219,7 +220,7 @@ function askPin(){
    <p id="pinerr" style="color:var(--bad);min-height:20px"></p><button class="btn" id="pingo">進入</button></div>`;
   document.body.appendChild(m);
   const go=async()=>{ const v=$('#pinin').value.trim();
-    try{ const r=await fetch('/api/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:v,action:'check'})});
+    try{ const r=await fetch(API_BASE+'/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:v,action:'check'})});
       if(r.ok){ PIN=v; store.set('tp-pin',v); m.remove(); document.body.classList.remove('locked'); poll(); draw(); } else $('#pinerr').textContent='老師碼不對';
     }catch(e){ $('#pinerr').textContent='連不上伺服器，請檢查網路'; } };
   $('#pingo').onclick=go; $('#pinin').onkeydown=e=>{ if(e.key==='Enter') go(); }; setTimeout(()=>$('#pinin').focus(),50);
@@ -407,7 +408,7 @@ function drawMain(){ $('#main').innerHTML=({show,board,rank,flow,ans,qr})[tab]()
 function draw(){ nav(); drawMain(); }
 document.body.classList.add('locked');
 draw();
-if(PIN){ fetch('/api/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:PIN,action:'check'})}).then(r=>{ if(r.ok){ document.body.classList.remove('locked'); } else { PIN=''; askPin(); } }).catch(()=>{ document.body.classList.remove('locked'); }); } else askPin();
+if(PIN){ fetch(API_BASE+'/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:PIN,action:'check'})}).then(r=>{ if(r.ok){ document.body.classList.remove('locked'); } else { PIN=''; askPin(); } }).catch(()=>{ document.body.classList.remove('locked'); }); } else askPin();
 poll(); setInterval(poll,2000);
 </script>
 </body>

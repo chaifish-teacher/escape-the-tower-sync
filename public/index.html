@@ -180,6 +180,7 @@ input{-webkit-user-select:text;user-select:text}
 <body>
 <div id="app"></div>
 <script>
+const API_BASE = location.pathname.startsWith('/demo') ? '/api/demo' : '/api';
 /* ============ DATA ============ */
 const W = [
  // hair
@@ -421,7 +422,7 @@ const save = ()=>{ store.set('escape-v1',es); report(); };
 const DEVICE = store.get('device-id',null) || (()=>{ const d='d'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); store.set('device-id',d); return d; })();
 let net={online:null,room:null,pending:false,timer:null,retry:null};
 async function api(path,body){
-  const r=await fetch('/api'+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  const r=await fetch(API_BASE+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
   if(r.status>=500) throw new Error('server');
   return r.json();
 }
