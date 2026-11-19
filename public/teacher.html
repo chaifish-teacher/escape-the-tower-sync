@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escape the Tower｜老師端</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--orange:#F0821E;--orange-d:#C9650C;--blue:#2A9BD0;--blue-d:#1B77A3;--ink:#1F2430;--muted:#5B6270;--paper:#FFFBF2;--line:#E7DCC6;--good:#2E9E5B;--bad:#D9483B;--gold:#F5C330}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:"Fredoka",-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:#F3EBDA}
+.zh,td,th,p,li{font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+header{background:var(--ink);color:#fff;padding:12px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:22px;white-space:nowrap}
+.phases{display:flex;gap:6px;flex:1;min-width:380px}
+.ph{flex:1;border-radius:10px;padding:6px 8px;background:#343B4A;font-size:14px;text-align:center;line-height:1.2;position:relative;overflow:hidden}
+.ph .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--gold)}
+.ph.on{background:var(--orange)}
+.ph.past{opacity:.5}
+.ptime{font-size:40px;font-weight:700;min-width:120px;text-align:center;font-variant-numeric:tabular-nums}
+.ptime.over{color:#FF8A7A}
+.hb{background:#fff;color:var(--ink);border-radius:10px;padding:8px 12px;font-weight:700}
+.hb.o{background:var(--orange);color:#fff}
+nav{display:flex;gap:8px;padding:12px 18px 0;flex-wrap:wrap}
+nav button{padding:10px 18px;border-radius:12px 12px 0 0;background:#E4D8BF;font-weight:700;font-size:17px}
+nav button.on{background:#fff}
+main{background:#fff;margin:0 18px 18px;border-radius:0 16px 16px 16px;padding:18px;min-height:70vh}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:12px;font-weight:700;background:var(--orange);color:#fff;box-shadow:0 4px 0 var(--orange-d)}
+.btn.blue{background:var(--blue);box-shadow:0 4px 0 var(--blue-d)}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn.red{background:var(--bad);box-shadow:0 4px 0 #A7342A}
+.btn:active{transform:translateY(2px)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.gamebar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#FFF6E8;border:3px solid #F7CFA7;border-radius:16px;padding:12px 16px;margin-bottom:16px}
+.gclock{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums}
+.gclock small{font-size:18px;color:var(--muted);font-weight:600}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.team{border:3px solid var(--line);border-radius:18px;padding:12px 14px;background:var(--paper);position:relative}
+.team.esc{border-color:var(--good);background:#F0FAF3}
+.thead{display:flex;align-items:center;gap:10px}
+.tnum{width:52px;height:52px;border-radius:14px;background:var(--orange);color:#fff;font-size:30px;font-weight:700;display:grid;place-items:center}
+.tname{font-size:20px;font-weight:700;flex:1}
+.tscore{font-size:40px;font-weight:700;color:var(--blue-d);font-variant-numeric:tabular-nums}
+.track{display:flex;gap:6px;margin:10px 0}
+.st{flex:1;height:58px;border-radius:12px;background:#EEE6D6;display:grid;place-items:center;position:relative;filter:grayscale(1);opacity:.45}
+.st img{height:44px}
+.st.on{filter:none;opacity:1;background:#FFE7CF}
+.st .tm{position:absolute;bottom:-2px;right:3px;font-size:11px;color:var(--muted);font-weight:700}
+.st.lock{font-size:26px}
+.tbtns{display:flex;gap:6px;flex-wrap:wrap}
+.tbtns button{border-radius:10px;padding:8px 10px;font-weight:700;font-size:15px;background:#fff;border:2px solid var(--line)}
+.tbtns .adv{background:var(--good);color:#fff;border-color:#237a46;flex:1;font-size:17px}
+.tbtns .plus{background:#EAF6FC;border-color:#BFE2F2}
+.tbtns .minus{background:#FDECEA;border-color:#F5C2BC}
+.medal{position:absolute;top:-12px;right:-8px;font-size:36px}
+.detail{font-size:13px;color:var(--muted);margin-top:6px}
+.rank{display:flex;flex-direction:column;gap:10px;max-width:900px;margin:0 auto}
+.rk{display:grid;grid-template-columns:70px 80px 1fr 200px 120px;align-items:center;gap:12px;background:var(--paper);border:3px solid var(--line);border-radius:18px;padding:10px 16px;font-size:26px;font-weight:700}
+.rk .pos{font-size:40px;text-align:center}
+.rk .stg{display:flex;gap:4px}
+.rk .stg img{height:36px;filter:grayscale(1);opacity:.3}
+.rk .stg img.on{filter:none;opacity:1}
+.rk .sc{font-size:44px;color:var(--blue-d);text-align:right}
+.log{margin-top:16px;font-size:14px;color:var(--muted);max-height:160px;overflow:auto;background:#FAF7F0;border-radius:12px;padding:8px 12px}
+table{border-collapse:collapse;width:100%;font-size:16px}
+th,td{border:1px solid var(--line);padding:10px;vertical-align:top;text-align:left;line-height:1.55}
+th{background:#FFF1E2}
+td.t{white-space:nowrap;font-weight:700;color:var(--orange-d)}
+.say{background:#EAF6FC;border-radius:8px;padding:2px 6px;font-family:"Fredoka",sans-serif;font-weight:600;color:var(--blue-d)}
+.ans{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.acard{border:3px solid var(--line);border-radius:16px;padding:12px;background:var(--paper)}
+.acard img{height:70px;float:right}
+.acard .big{font-size:56px;font-weight:700;color:var(--orange-d);line-height:1}
+.warm li{font-size:20px;margin-bottom:10px;font-family:"Fredoka",sans-serif}
+.warm li b{background:var(--orange);color:#fff;border-radius:8px;padding:0 8px;margin-left:6px}
+.modal{position:fixed;inset:0;background:rgba(31,36,48,.6);display:grid;place-items:center;z-index:50}
+.modal .box{background:#fff;border-radius:18px;padding:22px;max-width:440px;text-align:center}
+.qrwrap{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+#qr{background:#fff;padding:16px;border-radius:16px;border:3px solid var(--line);min-width:300px;min-height:300px;display:grid;place-items:center}
+input.url{width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);font-size:16px}
+.pass{font-size:64px;font-weight:700;letter-spacing:10px;color:var(--orange-d)}
+.pts{background:#F0FAF3;border:2px solid #BFE5CC;border-radius:12px;padding:10px 14px;font-size:15px;margin-bottom:14px}
+
+/* ===== SLIDES ===== */
+.stagewrap{background:#1F2430;border-radius:16px;padding:12px;position:relative}
+.stagewrap:fullscreen{border-radius:0;display:flex;flex-direction:column;justify-content:center;padding:0}
+.stage{aspect-ratio:16/9;width:100%;max-height:calc(100vh - 230px);margin:0 auto;border-radius:12px;overflow:hidden;position:relative;background:#cfe8f5 url(img/bg.jpg) center/cover;container-type:size}
+.stagewrap:fullscreen .stage{max-height:calc(100vh - 64px);border-radius:0}
+.slide{position:absolute;inset:3% 3%;background:rgba(255,251,242,.95);border-radius:2.2cqw;padding:2.2cqw 3cqw;display:flex;flex-direction:column}
+.slide.full{inset:0;border-radius:0;padding:0;background:url(img/cover.jpg) center/cover}
+.slide h2{margin:0 0 1cqw;font-size:4.2cqw;text-align:center}
+.slide .sub{font-size:2.1cqw;text-align:center;color:var(--blue-d);margin-bottom:1.2cqw;font-weight:600}
+.sgrid{flex:1;display:grid;gap:1.2cqw;min-height:0}
+.vc{background:#fff;border:.35cqw solid var(--line);border-radius:1.4cqw;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:.8cqw;min-height:0;position:relative;overflow:hidden}
+.vc img{flex:1;min-height:0;max-width:100%;object-fit:contain}
+.vc .lab{font-size:2.1cqw;font-weight:700;margin-top:.4cqw;min-height:3cqw;text-align:center;line-height:1.1}
+.vc .lab small{display:block;font-size:1.5cqw;color:var(--muted);font-weight:500}
+.vc .lab.q{color:#C9BFA8}
+.vc.shown{border-color:var(--orange)}
+.vc .num{position:absolute;top:.6cqw;left:.6cqw;width:3.4cqw;height:3.4cqw;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:700;font-size:2cqw;border:.3cqw solid #fff}
+.vc.hit{border-color:var(--good);box-shadow:0 0 0 .6cqw rgba(46,158,91,.35)}
+.sctl{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:10px;color:#fff}
+.sctl .btn{padding:8px 14px}
+.sdots{display:flex;gap:6px}
+.sdots i{width:10px;height:10px;border-radius:50%;background:#4A5263;cursor:pointer}
+.sdots i.on{background:var(--gold)}
+.wdesc{background:#fff;border:.35cqw dashed var(--blue);border-radius:1.4cqw;padding:1cqw 1.6cqw;font-size:2.8cqw;font-weight:600;text-align:center;margin-bottom:1.2cqw;min-height:5cqw}
+.rbtns{display:flex;gap:.8cqw;justify-content:center;margin-bottom:1cqw}
+.rbtns button{font-size:1.8cqw;padding:.5cqw 1.4cqw;border-radius:1cqw;background:#fff;border:.25cqw solid var(--line);font-weight:700}
+.rbtns button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqw;flex:1}
+.pc{background:#fff;border-radius:1.6cqw;border:.4cqw solid var(--line);padding:1.6cqw;display:flex;flex-direction:column}
+.pc .f{font-size:2.4cqw;font-weight:700;color:#fff;border-radius:1cqw;padding:.6cqw 1cqw;text-align:center}
+.pc .w{font-size:1.8cqw;color:var(--muted);margin:1cqw 0;text-align:center}
+.pc .ex{font-size:2.3cqw;line-height:1.6;font-weight:600}
+.pc img{height:12cqw;width:auto;max-width:100%;object-fit:contain;margin:auto}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1cqw;flex:1;min-height:0}
+.rule{background:#fff;border-radius:1.4cqw;border:.35cqw solid var(--line);padding:.6cqw 1.4cqw;font-size:2.1cqw;line-height:1.45;display:flex;gap:1.2cqw;align-items:center}
+.rule .ri{font-size:3.4cqw}
+.mons{display:grid;grid-template-columns:repeat(4,1fr);gap:2cqw;flex:1;align-items:center}
+.mon{background:#fff;border-radius:1.8cqw;border:.4cqw solid var(--line);height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1cqw}
+.mon img{height:9cqw;object-fit:contain}
+.mon .d{width:8cqw;height:9.5cqw;border-radius:1.4cqw;background:#1F2430;color:var(--gold);display:grid;place-items:center;font-size:6.5cqw;font-weight:700;margin-top:1cqw}
+.mon .d.hid{background:#EEE6D6;color:#B9AE97;font-size:6cqw}
+.mon .why{font-size:1.6cqw;color:var(--muted);text-align:center;margin-top:.8cqw;min-height:4cqw}
+body.locked main,body.locked nav{filter:blur(14px);pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏰 Escape the Tower</h1><span id="netst" class="zh" style="font-size:15px;font-weight:700">連線中…</span><span style="flex:1"></span><button class="hb" onclick="PIN='';store.set('tp-pin','');askPin()">🔐 換老師碼</button>
+</header>
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<script>
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const fmt=ms=>{const neg=ms<0;const s=Math.floor(Math.abs(ms)/1000);return (neg?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const MON=['m1','m2','m3','m4'];
+const TEAMS=7;
+const STAGE_PTS=10, ESC_BONUS=[10,7,5,3,3,3,3];
+
+/* ===== LESSON PHASE TIMER ===== */
+const PHASES=[{n:'開場 暖身',m:5},{n:'單字教學',m:15},{n:'密室逃脫',m:15},{n:'結尾 回顧',m:5}];
+let P=store.get('tp-phase',{i:0,run:false,acc:0,since:0});
+const pElapsed=()=>P.acc+(P.run?Date.now()-P.since:0);
+function pToggle(){ if(P.run){P.acc+=Date.now()-P.since;P.run=false}else{P.since=Date.now();P.run=true} store.set('tp-phase',P); drawPhase(); }
+function pNext(){ if(P.i<PHASES.length-1){ P={i:P.i+1,run:P.run,acc:0,since:Date.now()}; store.set('tp-phase',P); drawPhase(); } }
+function pGo(i){ P={i,run:false,acc:0,since:0}; store.set('tp-phase',P); drawPhase(); }
+function drawPhase(){ if(!$('#phases')) return;
+  const el=pElapsed(), tot=PHASES[P.i].m*60000, left=tot-el;
+  $('#phases').innerHTML=PHASES.map((p,i)=>`<button class="ph ${i===P.i?'on':''} ${i<P.i?'past':''}" onclick="pGo(${i})"><b>${p.n}</b><br>${p.m} 分<div class="bar" style="width:${i<P.i?100:i===P.i?Math.min(100,el/tot*100):0}%"></div></button>`).join('');
+  const t=$('#ptime'); t.textContent=fmt(left); t.classList.toggle('over',left<0);
+  $('#pplay').textContent=P.run?'⏸ 暫停':'▶ 開始';
+}
+
+/* ===== GAME STATE (synced with server) ===== */
+let SV={room:null,now:0,teacher:{start:0,limit:11,bonus:{},adj:{},escAt:{},log:[]},teams:{}}, skew=0, online=null, lastSig='';
+let PIN=store.get('tp-pin','');
+async function api(path,body){
+  const r=await fetch('/api'+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401){ PIN=''; store.set('tp-pin',''); askPin(); throw new Error('pin'); }
+  if(!r.ok) throw new Error(j.reason||'err');
+  return j;
+}
+const snow=()=>Date.now()+skew;
+async function poll(){
+  try{ const j=await api('/state'); SV=j; skew=j.now-Date.now(); online=true; }catch(e){ online=false; }
+  const sig=JSON.stringify([SV.teams,SV.teacher,SV.room,online]);
+  if(sig!==lastSig){ lastSig=sig; if(tab==='board'||tab==='rank') drawMain(); }
+  drawNet();
+}
+async function act(action,extra={}){
+  if(!PIN){ askPin(); return; }
+  try{ await api('/teacher',{pin:PIN,action,...extra}); }catch(e){ if(e.message!=='pin') toastModal('連線失敗，請再按一次'); }
+  await poll();
+}
+function teamsView(){
+  const T=SV.teacher||{}; const adj=T.adj||{}, escAtT=T.escAt||{}, bon=T.bonus||{};
+  const arr=[];
+  for(let n=1;n<=TEAMS;n++){
+    const r=SV.teams&&SV.teams[n]; const base=r?r.stage||0:0;
+    const stage=Math.max(0,Math.min(5,base+(adj[n]||0)));
+    const sa=(r&&r.stageAt)||{};
+    const escAt=stage>=5?(sa[5]||escAtT[n]||null):null;
+    const t0=T.start||(r&&r.joinedAt)||0;
+    const times=[1,2,3,4,5].map(s=>sa[s]&&s<=stage?sa[s]-t0:null); if(escAt) times[4]=escAt-t0;
+    arr.push({n,rec:r,stage,escAt,times,hints:r?r.hints||0:0,wrong:r?r.wrong||0:0,bonus:bon[n]||0,adj:adj[n]||0});
+  }
+  const order=arr.filter(t=>t.escAt).sort((a,b)=>a.escAt-b.escAt).map(t=>t.n);
+  arr.forEach(t=>{ const e=order.indexOf(t.n); t.esc=e; t.score=Math.min(t.stage,4)*STAGE_PTS+(e>=0?ESC_BONUS[e]:0)+t.bonus; });
+  return arr;
+}
+function events(){
+  const T=SV.teacher||{}; const ev=(T.log||[]).map(l=>({at:l.at,msg:l.msg}));
+  for(let n=1;n<=TEAMS;n++){ const r=SV.teams&&SV.teams[n]; if(!r) continue;
+    ev.push({at:r.joinedAt,msg:`📱 第 ${n} 組加入`});
+    Object.entries(r.stageAt||{}).forEach(([s,at])=>ev.push({at,msg:+s===5?`🔓 第 ${n} 組 成功逃脫！`:`✅ 第 ${n} 組 通過第 ${s} 關`})); }
+  return ev.sort((a,b)=>b.at-a.at).slice(0,60);
+}
+function confirmBox(title,text,okLabel,fn){
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="box"><div style="font-size:22px;font-weight:700;margin-bottom:8px">${title}</div><p>${text}</p>
+   <div class="row" style="justify-content:center"><button class="btn ghost" id="c0">取消</button><button class="btn red" id="c1">${okLabel}</button></div></div>`;
+  document.body.appendChild(m); m.querySelector('#c0').onclick=()=>m.remove();
+  m.querySelector('#c1').onclick=()=>{ m.remove(); fn(); };
+}
+function newClass(){ confirmBox('開始新的一班？','所有組別的進度、分數、紀錄都會清除。<br>學生 iPad 會<b>自動歸零</b>，不用一台一台重設。','清除並開始新的一班',()=>act('newclass')); }
+function release(n){ confirmBox(`清除第 ${n} 組？`,`第 ${n} 組的進度會刪除，可以重新選組。<br>（用在學生選錯組、或換一台 iPad 的時候）`,'清除這一組',()=>act('release',{team:n})); }
+function askPin(){
+  if($('#pinbox')) return;
+  const m=document.createElement('div'); m.className='modal'; m.id='pinbox';
+  m.innerHTML=`<div class="box"><div style="font-size:40px">🔐</div><div style="font-size:22px;font-weight:700;margin-bottom:8px">老師登入</div><p>請輸入老師碼</p>
+   <input id="pinin" type="password" inputmode="numeric" maxlength="8" style="font-size:28px;text-align:center;width:180px;padding:8px;border-radius:12px;border:2px solid var(--line);letter-spacing:6px">
+   <p id="pinerr" style="color:var(--bad);min-height:20px"></p><button class="btn" id="pingo">進入</button></div>`;
+  document.body.appendChild(m);
+  const go=async()=>{ const v=$('#pinin').value.trim();
+    try{ const r=await fetch('/api/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:v,action:'check'})});
+      if(r.ok){ PIN=v; store.set('tp-pin',v); m.remove(); document.body.classList.remove('locked'); poll(); draw(); } else $('#pinerr').textContent='老師碼不對';
+    }catch(e){ $('#pinerr').textContent='連不上伺服器，請檢查網路'; } };
+  $('#pingo').onclick=go; $('#pinin').onkeydown=e=>{ if(e.key==='Enter') go(); }; setTimeout(()=>$('#pinin').focus(),50);
+}
+function toastModal(msg){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="box"><div style="font-size:20px;font-weight:700">${msg}</div><div style="margin-top:12px"><button class="btn">好</button></div></div>`; document.body.appendChild(m); m.querySelector('button').onclick=()=>m.remove(); }
+function drawNet(){ const el=$('#netst'); if(!el) return; el.textContent=online===false?'⚠ 連線中斷，重試中…':online?'🟢 即時同步中':'連線中…'; el.style.color=online===false?'#FF8A7A':'#9FE3B4'; }
+
+
+/* ===== SLIDES ===== */
+const VOC={
+ hair:{t:'Hair 頭髮',ids:[['longhair','She has long hair.','長髮'],['shorthair','She has short hair.','短髮'],['straight','She has straight hair.','直髮'],['curly','He has curly hair.','捲髮'],['dark','He has dark hair.','深色頭髮'],['blonde','She has blonde hair.','金髮'],['bald',"He's bald.",'禿頭的']]},
+ body:{t:'Age, Body & Face 年齡・身材・鬍子',ids:[['young',"He's young.",'年輕的'],['elderly',"He's elderly.",'年長的'],['tall',"She's tall.",'高的'],['short',"She's short.",'矮的'],['slim','She is slim.','苗條的'],['beard','He has a beard.','鬍子'],['moustache','He has a moustache.','小鬍子']]},
+ clothes:{t:'Clothes 服裝配件',ids:[['glasses','glasses','眼鏡'],['scarf','a scarf','圍巾'],['gloves','gloves','手套'],['shoes','shoes','鞋子'],['cap','a cap','鴨舌帽'],['hat','a hat','帽子'],['trousers','trousers','長褲（美：pants）'],['handbag','a handbag','手提包'],['jacket','a jacket','夾克'],['jumper','a jumper','毛衣（美：sweater）']]},
+};
+const WP=['longhair','curly','beard','bald','blonde','dark','young','elderly'];
+const WR=[["She has long curly hair. She's wearing glasses.",'longhair'],["He's bald. He's wearing a tie.",'bald'],["She has blonde hair. She's wearing a blue jacket.",'blonde'],["He has a beard and a moustache.",'beard'],["He's elderly. He's wearing brown trousers.",'elderly'],["He's young. He has short dark hair.",'young']];
+const MWHY=['3 號：藍色牛仔褲、棕色鞋、沒有鬍子','長髮 YES → 夾克 NO → 長褲 BLUE','藍色字母拼出 ENGLISH','眼鏡 1、捲髮 1、短髮 3、金髮 1 → 1131'];
+const SL=['title','warm','hair','body','clothes','pattern','rules','reveal','end'];
+let S={i:store.get('tp-slide',0),shown:{},wr:-1,hit:null,rev:0,code:0};
+let voice=null;
+function pv(){ try{const vs=speechSynthesis.getVoices(); voice=vs.find(v=>/en-GB/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null;}catch(e){} }
+try{ pv(); speechSynthesis.onvoiceschanged=pv; }catch(e){}
+function speak(x){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(x); if(voice)u.voice=voice; u.lang=voice?voice.lang:'en-GB'; u.rate=.85; speechSynthesis.speak(u);}catch(e){} }
+function sGo(i){ S.i=Math.max(0,Math.min(SL.length-1,i)); S.shown={}; S.wr=-1; S.hit=null; S.rev=0; S.code=0; store.set('tp-slide',S.i); drawSlide(); }
+function vocSlide(k,cols){
+  const V=VOC[k];
+  return `<div class="slide"><h2>${V.t}</h2><div class="sub zh">點圖片顯示單字並發音，全班跟著唸！</div>
+   <div class="sgrid" style="grid-template-columns:repeat(${cols},1fr)">${V.ids.map(([id,s,zh],j)=>{const on=S.shown[id];
+    return `<button class="vc ${on?'shown':''}" onclick="S.shown['${id}']=1;speak('${s.replace(/'/g,"\\'")}');drawSlide()"><img src="img/${id}.webp"><div class="lab ${on?'':'q'}">${on?`${s}<small>${zh}</small>`:'?'}</div></button>`}).join('')}</div></div>`;
+}
+function slideHTML(){
+  const k=SL[S.i];
+  if(k==='title') return `<div class="slide full"></div>`;
+  if(k==='warm'){
+    const r=S.wr>=0?WR[S.wr]:null;
+    return `<div class="slide"><h2>Guess Who? 🕵️</h2>
+     <div class="rbtns">${WR.map((_,j)=>`<button class="${j===S.wr?'on':''}" onclick="S.wr=${j};S.hit=null;speak(WR[${j}][0]);drawSlide()">第 ${j+1} 題</button>`).join('')}${r?`<button onclick="speak(WR[S.wr][0])">🔊 再唸一次</button><button onclick="S.hit=WR[S.wr][1];drawSlide()">✅ 公布答案</button>`:''}</div>
+     <div class="wdesc">${r?r[0]:'<span class="zh" style="color:#9aa">點上方「第 1 題」開始</span>'}</div>
+     <div class="sgrid" style="grid-template-columns:repeat(4,1fr)">${WP.map((p,j)=>`<div class="vc ${S.hit===p?'hit':''}"><span class="num">${j+1}</span><img src="img/${p}.webp"></div>`).join('')}</div></div>`;
+  }
+  if(k==='hair') return vocSlide('hair',4);
+  if(k==='body') return vocSlide('body',4);
+  if(k==='clothes') return vocSlide('clothes',5);
+  if(k==='pattern') return `<div class="slide"><h2>How to describe people 怎麼描述一個人？</h2>
+    <div class="pat">
+     <div class="pc"><div class="f" style="background:var(--orange)">He / She <u>has</u> …</div><div class="w zh">頭髮、鬍子</div><div class="ex">She has long hair.<br>He has a beard.</div><img src="img/beard.webp"></div>
+     <div class="pc"><div class="f" style="background:var(--blue)">He / She <u>is</u> …</div><div class="w zh">年齡、身材、禿頭</div><div class="ex">He's young.<br>She's tall.</div><img src="img/tall.webp"></div>
+     <div class="pc"><div class="f" style="background:var(--good)">He / She <u>is wearing</u> …</div><div class="w zh">衣服、配件</div><div class="ex">She's wearing a scarf.<br>He's wearing glasses.</div><img src="img/scarf.webp"></div>
+    </div></div>`;
+  if(k==='rules') return `<div class="slide"><h2>🏰 Escape the Tower 遊戲規則</h2>
+    <div class="rules zh">
+     <div class="rule"><span class="ri">👥</span><div>每組<b>一台 iPad</b>，輪流操作，大家一起討論</div></div>
+     <div class="rule"><span class="ri">🐉</span><div>打敗 <b>4 隻怪獸</b>，每關得到<b>一個密碼數字</b></div></div>
+     <div class="rule"><span class="ri">🥶</span><div>答錯會被<b>凍結 8 秒</b>，先討論再按！</div></div>
+     <div class="rule"><span class="ri">🙋</span><div>過關會<b>自動回報</b>給老師，不用舉手</div></div>
+     <div class="rule"><span class="ri">💡</span><div>卡住可以按<b>提示</b>，每組<b>最多 3 次</b></div></div>
+     <div class="rule"><span class="ri">🗣</span><div>用<b>英文</b>討論可以<b>加分</b>喔！</div></div>
+    </div>
+    <div style="text-align:center;margin-top:1cqw">${S.code?`<span class="zh" style="font-size:2.4cqw;font-weight:700">開始碼</span> <span style="font-size:4.2cqw;font-weight:700;letter-spacing:1.2cqw;background:#1F2430;color:var(--gold);border-radius:1.2cqw;padding:.2cqw 1.6cqw;margin-left:1cqw">7319</span>`:`<button class="btn" style="font-size:2.2cqw;padding:.8cqw 2.4cqw" onclick="S.code=1;drawSlide()">🔓 顯示開始碼</button>`}</div></div>`;
+  if(k==='reveal') return `<div class="slide"><h2>What's the code? 🔐</h2><div class="sub zh">點怪獸，一隻一隻公布答案</div>
+    <div class="mons">${MON.map((m,j)=>`<button class="mon" onclick="S.rev=Math.max(S.rev,${j+1});drawSlide()"><img src="img/${m}.webp"><div class="d ${S.rev>j?'':'hid'}">${S.rev>j?[3,4,1,2][j]:'?'}</div><div class="why zh">${S.rev>j?MWHY[j]:''}</div></button>`).join('')}</div>
+    ${S.rev>=4?'<div style="text-align:center;font-size:2.8cqw;font-weight:700;margin-top:.6cqw">🔓 3 4 1 2 — You escaped the tower!</div>':''}</div>`;
+  if(k==='end') return `<div class="slide" style="justify-content:center;text-align:center"><div style="font-size:7cqw">✍️</div><h2>Exit Ticket 出場卷</h2>
+    <div style="font-size:3cqw;font-weight:600;line-height:1.6">Describe the person in <u>two sentences</u>.</div>
+    <div class="zh" style="font-size:2.4cqw;color:var(--muted)">打開 iPad 第 6 個活動，用 2 句英文描述圖片中的人</div>
+    <div style="font-size:2.6cqw;margin-top:2cqw;color:var(--blue-d)">e.g. <b>He has short dark hair. He's wearing glasses.</b></div>
+    <div style="font-size:4cqw;font-weight:700;margin-top:3cqw;color:var(--orange-d)">Great work today! 🎉</div></div>`;
+}
+function show(){
+  setTimeout(drawSlide,0);
+  return `<div class="stagewrap" id="sw"><div class="stage" id="stage"></div>
+   <div class="sctl"><button class="btn ghost" onclick="sGo(S.i-1)">← 上一頁</button><div class="sdots" id="sdots"></div><button class="btn" onclick="sGo(S.i+1)">下一頁 →</button>
+   <button class="btn blue" onclick="fs()">⛶ 全螢幕</button></div></div>
+   <p class="zh" style="color:var(--muted);font-size:14px;margin:8px 0 0">鍵盤 ← → 換頁。投影順序：封面 → 暖身 → 單字 3 頁 → 句型 → 遊戲規則（之後切到計分板）→ 公布密碼 → 出場卷。</p>`;
+}
+function drawSlide(){
+  const st=$('#stage'); if(!st) return;
+  st.innerHTML=slideHTML();
+  $('#sdots').innerHTML=SL.map((_,j)=>`<i class="${j===S.i?'on':''}" onclick="sGo(${j})"></i>`).join('');
+}
+function fs(){ const el=$('#sw'); try{ if(document.fullscreenElement) document.exitFullscreen(); else (el.requestFullscreen||el.webkitRequestFullscreen).call(el); }catch(e){} }
+document.addEventListener('keydown',e=>{ if(tab!=='show') return; if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();sGo(S.i+1)} if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();sGo(S.i-1)} });
+
+/* ===== VIEWS ===== */
+let tab=store.get('tp-tab','show');
+const TABS={show:'📽 投影簡報',board:'📊 計分板',rank:'🏆 排行榜（投影用）',flow:'📋 流程與講稿',ans:'🔑 答案',qr:'📱 學生連結 QR'};
+function nav(){ $('#nav').innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="${k===tab?'on':''}" onclick="tab='${k}';store.set('tp-tab',tab);draw()">${v}</button>`).join(''); }
+function gamebar(){
+  const T=SV.teacher||{}; const el=T.start?snow()-T.start:0, left=(T.limit||11)*60000-el;
+  const tv=teamsView();
+  return `<div class="gamebar">
+   ${T.start?`<div class="gclock" id="gclock" style="color:${left<0?'var(--bad)':'inherit'}">${fmt(left)} <small>剩餘（已過 ${fmt(el)}）</small></div>`:`<button class="btn" style="font-size:22px" onclick="act('start')">▶ 遊戲開始（開始計時）</button>`}
+   <div class="row zh">遊戲時間 <button class="btn ghost" onclick="act('limit',{delta:-1})">−</button><b style="font-size:22px">${T.limit||11} 分</b><button class="btn ghost" onclick="act('limit',{delta:1})">+</button></div>
+   <span style="flex:1"></span>
+   <span class="zh">已加入 <b style="font-size:22px">${tv.filter(t=>t.rec).length}</b> 組｜已逃脫 <b style="font-size:22px">${tv.filter(t=>t.escAt).length}</b> / ${TEAMS} 組</span>
+   <button class="btn ghost" onclick="newClass()">🆕 新的一班（清除重來）</button></div>`;
+}
+function board(){
+  const medals=['🥇','🥈','🥉']; const tv=teamsView(); const T=SV.teacher||{};
+  return gamebar()+`
+  <div class="pts zh">🔄 <b>學生過關會自動出現在這裡</b>，不用再按。計分：每過一關 <b>+${STAGE_PTS}</b>｜逃脫名次 第1名 <b>+10</b>、第2名 <b>+7</b>、第3名 <b>+5</b>、其他 <b>+3</b>｜老師加分：🗣 說英文 +2、🤝 團隊合作 +2、✋ 秩序好 +1、⭐ 特別表現 +5、➖ 扣 1 分。<br>
+  某組 iPad 出狀況時，可用「＋關／－關」手動修正，或「清除」讓他們重新選組。</div>
+  <div class="teams">${tv.map(t=>{ const n=t.n;
+    const st=!t.rec&&!t.adj?'尚未加入':t.stage>=5?`逃脫時間 ${t.times[4]!=null?fmt(t.times[4]):''}`:t.stage===4?'正在開鎖':`正在第 ${t.stage+1} 關`;
+    return `<div class="team ${t.stage>=5?'esc':''}" style="${!t.rec&&!t.adj?'opacity:.6':''}">${t.esc>=0&&t.esc<3?`<span class="medal">${medals[t.esc]}</span>`:''}
+    <div class="thead"><div class="tnum">${n}</div><div class="tname">第 ${n} 組<div class="detail">${st}</div></div><div class="tscore">${t.score}</div></div>
+    <div class="track">${MON.map((m,k)=>`<div class="st ${t.stage>k?'on':''}"><img src="img/${m}.webp">${t.times[k]!=null?`<span class="tm">${fmt(t.times[k])}</span>`:''}</div>`).join('')}<div class="st lock ${t.stage>=5?'on':''}">🔓</div></div>
+    <div class="detail zh" style="font-size:15px;margin:0 0 6px">💡 提示 <b>${t.hints}</b>/3　❌ 答錯 <b>${t.wrong}</b>${t.bonus?`　⭐ 加分 <b>${t.bonus>0?'+':''}${t.bonus}</b>`:''}${t.adj?`　✋ 手動 ${t.adj>0?'+':''}${t.adj} 關`:''}</div>
+    <div class="tbtns"><button class="plus" onclick="act('bonus',{team:${n},value:2,why:'🗣 說英文'})">🗣+2</button><button class="plus" onclick="act('bonus',{team:${n},value:2,why:'🤝 團隊合作'})">🤝+2</button><button class="plus" onclick="act('bonus',{team:${n},value:1,why:'✋ 秩序好'})">✋+1</button><button class="plus" onclick="act('bonus',{team:${n},value:5,why:'⭐ 特別表現'})">⭐+5</button><button class="minus" onclick="act('bonus',{team:${n},value:-1,why:'➖ 扣分'})">➖1</button></div>
+    <div class="tbtns" style="margin-top:6px;font-size:13px"><button onclick="act('adj',{team:${n},delta:1})" style="font-size:13px">＋關</button><button onclick="act('adj',{team:${n},delta:-1})" style="font-size:13px">－關</button><button onclick="release(${n})" style="font-size:13px;margin-left:auto">清除此組</button></div>
+    </div>`}).join('')}</div>
+  <div class="log zh"><b>紀錄</b><br>${events().map(e=>`[${T.start&&e.at>=T.start?fmt(e.at-T.start):new Date(e.at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}] ${e.msg}`).join('<br>')||'（還沒有紀錄）'}</div>`;
+}
+function rank(){
+  const tv=teamsView().sort((a,b)=>b.score-a.score||b.stage-a.stage||((a.escAt||1e15)-(b.escAt||1e15)));
+  const medals=['🥇','🥈','🥉'];
+  return gamebar()+`<div class="rank">${tv.map((t,k)=>`<div class="rk"><div class="pos">${t.score>0&&medals[k]||k+1}</div><div class="tnum">${t.n}</div><div>第 ${t.n} 組${t.stage>=5&&t.times[4]!=null?` <span style="color:var(--good)">🔓 ${fmt(t.times[4])}</span>`:''}</div>
+   <div class="stg">${MON.map((m,j)=>`<img class="${t.stage>j?'on':''}" src="img/${m}.webp">`).join('')}</div><div class="sc">${t.score}</div></div>`).join('')}</div>`;
+}
+
+function flow(){
+  return `<table>
+  <tr><th style="width:90px">時間</th><th>活動</th><th style="width:34%">老師可以說 Classroom English</th><th style="width:22%">學生 iPad</th></tr>
+  <tr><td class="t">0–5'<br>開場</td><td>
+   ① 分組就座（7 組，每組 3–4 人，一組一台 iPad），請學生掃 QR code 打開網站。<br>
+   ② 講故事導入：「你們被困在高塔上，要學會描述人才能逃出去！」<br>
+   ③ Guess Who：在「📽 投影簡報」點題號，系統會唸描述，學生在 iPad 點出是幾號，再按「公布答案」。答對的組可加 🗣+2。</td>
+   <td><span class="say">Today we are going to describe people.</span><br><span class="say">Listen and find the person.</span><br><span class="say">Which number is it?</span><br><span class="say">Hold up your iPad!</span></td><td>① 暖身 Guess Who</td></tr>
+  <tr><td class="t">5–12'<br>學單字</td><td>
+   ① 投影「📽 投影簡報」單字頁，點圖顯示單字，全班一起唸 24 個單字（頭髮 → 身材鬍子 → 服裝）。<br>
+   ② 提醒英式/美式：<b>trousers = pants</b>、<b>jumper = sweater</b>、<b>moustache = mustache</b>。<br>
+   ③ 句型板書：<b>He/She has + 頭髮/鬍子</b>、<b>He/She is + 形容詞</b>、<b>He/She is wearing + 衣物</b>。<br>
+   ④ 學生自己用「單字卡」點圖聽發音、跟讀。</td>
+   <td><span class="say">Repeat after me.</span><br><span class="say">She <u>has</u> long hair. He <u>is</u> tall. She <u>is wearing</u> a scarf.</span><br><span class="say">Tap the cards and listen.</span></td><td>② 單字卡</td></tr>
+  <tr><td class="t">12–20'<br>練習</td><td>
+   ① 配對練習 3 組（約 5 分）。巡堂看卡住的組。<br>
+   ② 快問快答 8 題，看圖選字（約 3 分），請學生舉起平板看分數，7 分以上的組可加 ⭐。</td>
+   <td><span class="say">Match the sentences and the pictures.</span><br><span class="say">How many did you get?</span><br><span class="say">Good job!</span></td><td>③ 配對練習<br>④ 快問快答</td></tr>
+  <tr><td class="t">20–35'<br>密室逃脫</td><td>
+   ① 說明規則（2 分）：每組一台、輪流操作；答錯凍結 8 秒；提示每組最多 3 次；過關會自動回報。<br>
+   ② 學生先選好組別。講完規則按投影上的「🔓 顯示開始碼」（<b>7319</b>），同時在計分板按「▶ 遊戲開始」。<br>
+   ③ 學生過關會<b>自動</b>出現在計分板；看到用英文討論的組按 🗣+2。<br>
+   ④ 約 11 分鐘後停止，切到「🏆 排行榜」投影。</td>
+   <td><span class="say">Work in groups.</span><br><span class="say">Choose your group number.</span><br><span class="say">Type the start code on the screen.</span><br><span class="say">Ready, steady, go!</span><br><span class="say">One minute left!</span></td><td>⑤ 密室逃脫<br>（選組別＋輸入開始碼）</td></tr>
+  <tr><td class="t">35–40'<br>結尾</td><td>
+   ① 公布排行榜、頒獎（掌聲）。<br>
+   ② 請第 1 名說明每一關的答案：密碼 <b>3-4-1-2</b>。<br>
+   ③ 出場卷：每人用 2 句英文描述平板上的圖片，舉手唸給老師或同組聽。<br>
+   ④ 時間不夠時，改成老師指一位同學，全班一起描述他的<b>穿著</b>（避免評論身材外貌）。</td>
+   <td><span class="say">What's the code?</span><br><span class="say">Describe the person in two sentences.</span><br><span class="say">Great work today!</span></td><td>⑥ 出場卷</td></tr>
+  </table>
+  <p class="zh" style="color:var(--muted);margin-top:12px">💡 小提醒：國中生對 short / slim / bald 等外貌字詞可能比較敏感，活動都以卡通人物為主；若要描述班上同學，請只描述<b>衣著與配件</b>。</p>`;
+}
+function ans(){
+  return `<h2 style="margin-top:0">🕵️ 暖身 Guess Who（請唸給學生聽）</h2>
+  <ol class="warm">
+   <li>She has long curly hair. She's wearing glasses. <b>1</b></li>
+   <li>He's bald. He's wearing a tie. <b>4</b></li>
+   <li>She has blonde hair. She's wearing a blue jacket. <b>5</b></li>
+   <li>He has a beard and a moustache. <b>3</b></li>
+   <li>He's elderly. He's wearing brown trousers. <b>8</b></li>
+   <li>He's young. He has short dark hair. <b>7</b></li>
+  </ol>
+  <h2>🏰 密室逃脫答案　密碼 <span style="font-size:40px;color:var(--orange-d);letter-spacing:6px">3 4 1 2</span></h2>
+  <div class="ans">
+   <div class="acard"><img src="img/m1.webp"><div class="big">3</div><b>第一關</b><p>3 號：橘色襯衫、藍色牛仔褲、棕色鞋、棕色短髮、沒有鬍子。<br>（6 號有小鬍子、鞋子是灰色）</p></div>
+   <div class="acard"><img src="img/m2.webp"><div class="big">4</div><b>第二關</b><p>long hair? <b>YES</b> → jacket? <b>NO</b>（她穿的是毛衣）→ trousers? <b>BLUE</b> → <b>4</b></p></div>
+   <div class="acard"><img src="img/m3.webp"><div class="big">1</div><b>第三關</b><p>b<b>e</b>ard / lo<b>n</b>g hair / youn<b>g</b> / s<b>l</b>im / short ha<b>i</b>r / glas<b>s</b>es / moustac<b>h</b>e → <b>ENGLISH</b> = 選項 1</p></div>
+   <div class="acard"><img src="img/m4.webp"><div class="big">2</div><b>第四關</b><p>戴眼鏡 1、捲髮 1、短髮 3、金髮 1 → <b>1131</b> = 選項 2<br>（簡報原文寫 “third digit”，其實是第四位）</p></div>
+  </div>`;
+}
+let studentURL=store.get('tp-url','')||(location.protocol==='https:'?location.origin+'/':'');
+function qr(){
+  setTimeout(makeQR,0);
+  return `<div class="qrwrap"><div id="qr"><span class="zh" style="color:var(--muted)">貼上學生網址後<br>會在這裡產生 QR code</span></div>
+   <div><h2 style="margin-top:0">📱 學生網站</h2>
+   <p>貼上學生網站的<b>公開連結</b>，就會產生 QR code，投影讓學生用 iPad 相機掃描。</p>
+   <input class="url" id="url" placeholder="https://..." value="${studentURL.replace(/"/g,'')}" oninput="studentURL=this.value.trim();store.set('tp-url',studentURL);makeQR()">
+   <p>若學生不小心重新整理，闖關進度會保留在該台 iPad 上。</p></div></div>`;
+}
+function makeQR(){
+  const box=$('#qr'); if(!box) return;
+  if(!studentURL){ return; }
+  if(typeof QRCode==='undefined'){ box.innerHTML='<span class="zh">QR 產生器載入失敗，請直接把網址寫在黑板上</span>'; return; }
+  box.innerHTML=''; new QRCode(box,{text:studentURL,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+}
+function drawMain(){ $('#main').innerHTML=({show,board,rank,flow,ans,qr})[tab](); }
+function draw(){ nav(); drawMain(); }
+document.body.classList.add('locked');
+draw();
+if(PIN){ fetch('/api/teacher',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:PIN,action:'check'})}).then(r=>{ if(r.ok){ document.body.classList.remove('locked'); } else { PIN=''; askPin(); } }).catch(()=>{ document.body.classList.remove('locked'); }); } else askPin();
+poll(); setInterval(poll,2000);
+setInterval(()=>{ const T=SV.teacher||{}; const g=$('#gclock'); if(g&&T.start){ const el=snow()-T.start,left=(T.limit||11)*60000-el; g.innerHTML=`${fmt(left)} <small>剩餘（已過 ${fmt(el)}）</small>`; g.style.color=left<0?'var(--bad)':'inherit'; } },1000);
+</script>
+</body>
+</html>
