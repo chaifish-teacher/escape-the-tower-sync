@@ -1,9 +1,9 @@
 // Core game-sync logic. `store` needs: get(key,{type:'json'}), setJSON(key,val), delete(key).
-export const TEAMS = 7;
+export const MAX_TEAMS = 12;
 const tKey = (room, n) => `r-${room}-t${n}`;
 const teacherKey = room => `r-${room}-teacher`;
 const newRoom = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const freshTeacher = () => ({ start: 0, limit: 11, bonus: {}, adj: {}, escAt: {}, log: [] });
+const freshTeacher = () => ({ teamCount: 7, start: 0, limit: 11, bonus: {}, adj: {}, escAt: {}, log: [] });
 const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(Number(v) || 0)));
 
 async function getJSON(store, key) {
@@ -22,22 +22,24 @@ export async function handle({ store, method, path, body = {}, now = Date.now(),
 
   if (method === 'GET' && route === 'room') {
     const m = await meta(store, now);
-    return ok({ room: m.room, now });
+    const T = await getJSON(store, teacherKey(m.room));
+    return ok({ room: m.room, now, teamCount: (T && T.teamCount) || 7 });
   }
 
   if (method === 'GET' && route === 'state') {
     const m = await meta(store, now);
-    const keys = Array.from({ length: TEAMS }, (_, i) => tKey(m.room, i + 1));
+    const keys = Array.from({ length: MAX_TEAMS }, (_, i) => tKey(m.room, i + 1));
     const [teacher, ...recs] = await Promise.all([getJSON(store, teacherKey(m.room)), ...keys.map(k => getJSON(store, k))]);
     const teams = {};
     recs.forEach((r, i) => { teams[i + 1] = r ? { ...r, device: undefined, deviceTag: (r.device || '').slice(-4) } : null; });
-    return ok({ room: m.room, now, teacher: teacher || freshTeacher(), teams });
+    const T = teacher || freshTeacher(); if (!T.teamCount) T.teamCount = 7;
+    return ok({ room: m.room, now, teacher: T, teams });
   }
 
   if (method === 'POST' && (route === 'claim' || route === 'report')) {
     const m = await meta(store, now);
     if (body.room !== m.room) return ok({ ok: false, reason: 'room', room: m.room });
-    const team = clampInt(body.team, 0, TEAMS);
+    const team = clampInt(body.team, 0, MAX_TEAMS);
     const device = String(body.device || '').slice(0, 40);
     if (!team || !device) return bad(400, { ok: false, reason: 'bad' });
     const key = tKey(m.room, team);
@@ -73,9 +75,14 @@ export async function handle({ store, method, path, body = {}, now = Date.now(),
     }
     const tk = teacherKey(m.room);
     const T = (await getJSON(store, tk)) || freshTeacher();
-    const n = clampInt(body.team, 0, TEAMS);
+    const n = clampInt(body.team, 0, MAX_TEAMS);
     const log = msg => { T.log.unshift({ at: now, msg }); T.log = T.log.slice(0, 80); };
     if (action === 'start') { if (!T.start) { T.start = now; log('🏁 遊戲開始'); } }
+    else if (action === 'teams') {
+      const before = T.teamCount || 7;
+      T.teamCount = clampInt(before + (Number(body.delta) > 0 ? 1 : -1), 2, MAX_TEAMS);
+      if (T.teamCount !== before) log(`組數改為 ${T.teamCount} 組`);
+    }
     else if (action === 'limit') { T.limit = clampInt(T.limit + Number(body.delta || 0), 3, 30); }
     else if (action === 'bonus' && n) {
       const v = clampInt(body.value, -20, 20);

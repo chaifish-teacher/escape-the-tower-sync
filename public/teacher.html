@@ -141,7 +141,7 @@ const $=s=>document.querySelector(s);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const fmt=ms=>{const neg=ms<0;const s=Math.floor(Math.abs(ms)/1000);return (neg?'+':'')+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const MON=['m1','m2','m3','m4'];
-const TEAMS=7;
+const TC=()=>((SV&&SV.teacher&&SV.teacher.teamCount)||7);
 const STAGE_PTS=10, ESC_BONUS=[10,7,5,3,3,3,3];
 
 /* ===== LESSON PHASE TIMER ===== */
@@ -183,7 +183,7 @@ async function act(action,extra={}){
 function teamsView(){
   const T=SV.teacher||{}; const adj=T.adj||{}, escAtT=T.escAt||{}, bon=T.bonus||{};
   const arr=[];
-  for(let n=1;n<=TEAMS;n++){
+  for(let n=1;n<=TC();n++){
     const r=SV.teams&&SV.teams[n]; const base=r?r.stage||0:0;
     const stage=Math.max(0,Math.min(5,base+(adj[n]||0)));
     const sa=(r&&r.stageAt)||{};
@@ -193,12 +193,12 @@ function teamsView(){
     arr.push({n,rec:r,stage,escAt,times,hints:r?r.hints||0:0,wrong:r?r.wrong||0:0,bonus:bon[n]||0,adj:adj[n]||0});
   }
   const order=arr.filter(t=>t.escAt).sort((a,b)=>a.escAt-b.escAt).map(t=>t.n);
-  arr.forEach(t=>{ const e=order.indexOf(t.n); t.esc=e; t.score=Math.min(t.stage,4)*STAGE_PTS+(e>=0?ESC_BONUS[e]:0)+t.bonus; });
+  arr.forEach(t=>{ const e=order.indexOf(t.n); t.esc=e; t.score=Math.min(t.stage,4)*STAGE_PTS+(e>=0?(ESC_BONUS[e]??3):0)+t.bonus; });
   return arr;
 }
 function events(){
   const T=SV.teacher||{}; const ev=(T.log||[]).map(l=>({at:l.at,msg:l.msg}));
-  for(let n=1;n<=TEAMS;n++){ const r=SV.teams&&SV.teams[n]; if(!r) continue;
+  for(let n=1;n<=TC();n++){ const r=SV.teams&&SV.teams[n]; if(!r) continue;
     ev.push({at:r.joinedAt,msg:`📱 第 ${n} 組加入`});
     Object.entries(r.stageAt||{}).forEach(([s,at])=>ev.push({at,msg:+s===5?`🔓 第 ${n} 組 成功逃脫！`:`✅ 第 ${n} 組 通過第 ${s} 關`})); }
   return ev.sort((a,b)=>b.at-a.at).slice(0,60);
@@ -311,7 +311,8 @@ function nav(){ $('#nav').innerHTML=Object.entries(TABS).map(([k,v])=>`<button c
 function gamebar(){
   const tv=teamsView();
   return `<div class="gamebar">
-   <span class="zh" style="font-size:18px">已加入 <b style="font-size:24px">${tv.filter(t=>t.rec).length}</b> 組｜已逃脫 <b style="font-size:24px">${tv.filter(t=>t.escAt).length}</b> / ${TEAMS} 組</span>
+   <div class="row zh" style="font-size:18px">組數 <button class="btn ghost" onclick="act('teams',{delta:-1})" title="減少一組">−</button><b style="font-size:26px;min-width:34px;text-align:center">${TC()}</b><button class="btn ghost" onclick="act('teams',{delta:1})" title="新增一組">＋</button></div>
+   <span class="zh" style="font-size:18px">已加入 <b style="font-size:24px">${tv.filter(t=>t.rec).length}</b> 組｜已逃脫 <b style="font-size:24px">${tv.filter(t=>t.escAt).length}</b> / ${TC()} 組</span>
    <span style="flex:1"></span>
    <button class="btn ghost" onclick="newClass()">🆕 新的一班（清除重來）</button></div>`;
 }
@@ -320,6 +321,7 @@ function board(){
   return gamebar()+`
   <div class="pts zh">🔄 <b>學生過關會自動出現在這裡</b>，不用再按。計分：每過一關 <b>+${STAGE_PTS}</b>｜逃脫名次 第1名 <b>+10</b>、第2名 <b>+7</b>、第3名 <b>+5</b>、其他 <b>+3</b>｜老師加分：🗣 說英文 +2、🤝 團隊合作 +2、✋ 秩序好 +1、⭐ 特別表現 +5、➖ 扣 1 分。<br>
   某組 iPad 出狀況時，可用「＋關／－關」手動修正，或「清除」讓他們重新選組。</div>
+  ${Object.keys(SV.teams||{}).filter(n=>+n>TC()&&SV.teams[n]).length?`<div class="pts zh" style="background:#FFF4E5;border-color:#F7CFA7">⚠️ 第 ${Object.keys(SV.teams).filter(n=>+n>TC()&&SV.teams[n]).join('、')} 組有進度但目前被隱藏，按組數「＋」就會再出現。</div>`:''}
   <div class="teams">${tv.map(t=>{ const n=t.n;
     const st=!t.rec&&!t.adj?'尚未加入':t.stage>=5?`逃脫時間 ${t.times[4]!=null?fmt(t.times[4]):''}`:t.stage===4?'正在開鎖':`正在第 ${t.stage+1} 關`;
     return `<div class="team ${t.stage>=5?'esc':''}" style="${!t.rec&&!t.adj?'opacity:.6':''}">${t.esc>=0&&t.esc<3?`<span class="medal">${medals[t.esc]}</span>`:''}
@@ -342,7 +344,7 @@ function flow(){
   return `<table>
   <tr><th style="width:90px">時間</th><th>活動</th><th style="width:34%">老師可以說 Classroom English</th><th style="width:22%">學生 iPad</th></tr>
   <tr><td class="t">0–5'<br>開場</td><td>
-   ① 分組就座（7 組，每組 3–4 人，一組一台 iPad），請學生掃 QR code 打開網站。<br>
+   ① 分組就座（預設 7 組，可在計分板調整組數；一組一台 iPad），請學生掃 QR code 打開網站。<br>
    ② 講故事導入：「你們被困在高塔上，要學會描述人才能逃出去！」<br>
    ③ Guess Who：在「📽 投影簡報」點題號，系統會唸描述，學生在 iPad 點出是幾號，再按「公布答案」。答對的組可加 🗣+2。</td>
    <td><span class="say">Today we are going to describe people.</span><br><span class="say">Listen and find the person.</span><br><span class="say">Which number is it?</span><br><span class="say">Hold up your iPad!</span></td><td>① 暖身 Guess Who</td></tr>

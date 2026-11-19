@@ -160,7 +160,7 @@ input{font:inherit}
 .lockcode{display:flex;gap:10px;justify-content:center;margin:10px 0}
 .lockcode span{width:70px;height:84px;border-radius:14px;background:#1F2430;color:var(--gold);display:grid;place-items:center;font-size:52px;font-weight:700}
 .field{padding:12px 14px;border-radius:14px;border:3px solid var(--line);font-size:22px;width:100%;max-width:340px;text-align:center;text-transform:uppercase;letter-spacing:4px}
-.teams{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:12px 0}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px;margin:12px 0}
 .teams button{height:76px;border-radius:16px;background:#fff;border:3px solid var(--line);font-size:30px;font-weight:700}
 .teams button.on{background:var(--orange);color:#fff;border-color:var(--orange-d)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-size:19px;z-index:80;max-width:90vw;text-align:center}
@@ -421,7 +421,7 @@ const save = ()=>{ store.set('escape-v1',es); report(); };
 
 /* ---------- SYNC with teacher ---------- */
 const DEVICE = store.get('device-id',null) || (()=>{ const d='d'+Math.random().toString(36).slice(2,10)+Date.now().toString(36); store.set('device-id',d); return d; })();
-let net={online:null,room:null,pending:false,timer:null,retry:null};
+let net={online:null,room:null,teamCount:7,pending:false,timer:null,retry:null};
 async function api(path,body){
   const r=await fetch(API_BASE+path,{method:body?'POST':'GET',headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
   if(r.status>=500) throw new Error('server');
@@ -430,6 +430,7 @@ async function api(path,body){
 function newClassReset(){ es=NEW_ES(); es.room=net.room; store.set('escape-v1',es); teamPick=null; toast('老師開始了新的一場，進度已重新開始',3000); render(); }
 async function syncRoom(){
   try{ const j=await api('/room'); net.online=true; net.room=j.room;
+    if(j.teamCount && j.teamCount!==net.teamCount){ net.teamCount=j.teamCount; if(view==='escape' && !es.started){ if(teamPick>net.teamCount) teamPick=null; escapeLogin(); } }
     if(es.room && es.room!==j.room) newClassReset();
     else if(!es.room && es.started){ es.room=j.room; store.set('escape-v1',es); report(); }
   }catch(e){ net.online=false; }
@@ -479,7 +480,7 @@ function escapeLogin(){
   app.innerHTML=`<div class="panel center">${topbar('🏰 密室逃脫 Escape the Tower')}
    <p class="guide zh" style="text-align:left">① 選你們的<b>組別</b>　② 輸入<b>投影上的開始碼</b>　③ 按「開始逃脫」。<br>每組只用<b>一台平板</b>，大家一起討論、輪流操作！</p>
    <div style="font-size:22px;font-weight:700" class="zh">我們是第幾組？</div>
-   <div class="teams">${[1,2,3,4,5,6,7].map(n=>`<button class="${teamPick===n?'on':''}" onclick="teamPick=${n};document.querySelectorAll('.teams button').forEach((b,k)=>b.classList.toggle('on',k+1===${n}))">${n}</button>`).join('')}</div>
+   <div class="teams">${Array.from({length:net.teamCount||7},(_,i)=>i+1).map(n=>`<button class="${teamPick===n?'on':''}" onclick="teamPick=${n};document.querySelectorAll('.teams button').forEach((b,k)=>b.classList.toggle('on',k+1===${n}))">${n}</button>`).join('')}</div>
    <div style="font-size:22px;font-weight:700;margin-top:14px" class="zh">開始碼（看投影）</div>
    <input id="pw" class="field" placeholder="????" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="4">
    <div style="margin-top:16px"><button class="btn" id="startbtn" onclick="escapeStart()">🔓 開始逃脫</button></div></div>`;
